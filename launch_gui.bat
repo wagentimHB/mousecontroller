@@ -5,8 +5,8 @@ echo.
 REM Change to the script directory
 cd /d "%~dp0"
 
-REM Run the GUI using the virtual environment Python
-venv\Scripts\python.exe run_gui.py
+REM Run the GUI using the virtual environment Python via main.py
+venv\Scripts\python.exe src\test\main.py gui
 
 REM Keep window open if there's an error
 if errorlevel 1 (
