@@ -4,6 +4,7 @@ GUI Demo Script - Shows how to launch the GUI
 """
 
 import sys
+import importlib.util
 from pathlib import Path
 
 # Add src to path
@@ -19,7 +20,19 @@ def demo_gui():
     print("=" * 60)
     
     try:
-        from mouse_recorder_gui import MouseRecorderGUI
+        # Import using the same path resolution as other modules
+        # Get the path to the GUI module
+        gui_module_path = src_path / "mouse_recorder_gui.py"
+        
+        # Dynamic import to avoid linting issues
+        spec = importlib.util.spec_from_file_location("mouse_recorder_gui", gui_module_path)
+        if spec is None or spec.loader is None:
+            raise ImportError(f"Cannot load GUI module from {gui_module_path}")
+        
+        mouse_recorder_gui_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mouse_recorder_gui_module)
+        
+        MouseRecorderGUI = mouse_recorder_gui_module.MouseRecorderGUI
         from PyQt6.QtWidgets import QApplication
         
         print("✅ Successfully imported GUI components")
