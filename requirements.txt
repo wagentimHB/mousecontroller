@@ -1,0 +1,7 @@
+# Production dependencies
+# Add your project dependencies here
+# Example:
+# requests>=2.25.1
+# numpy>=1.21.0
+
+# Development dependencies (install with: pip install -r requirements-dev.txt)
