@@ -81,6 +81,10 @@ class ReplayThread(QThread):
             self.replay_started.emit()
             
             # Custom replay with progress updates
+            if not self.replayer.recording_data:
+                self.replay_error.emit("No recording data available")
+                return
+                
             events = self.replayer.recording_data['events']
             if not events:
                 self.replay_error.emit("No events to replay")
@@ -128,6 +132,12 @@ class MouseRecorderGUI(QMainWindow):
         self.init_ui()
         self.setup_connections()
         self.update_file_info()
+        
+    def safe_status_message(self, message: str):
+        """Safely update status bar message"""
+        status_bar = self.statusBar()
+        if status_bar:
+            status_bar.showMessage(message)
         
     def init_ui(self):
         """Initialize the user interface"""
@@ -199,7 +209,7 @@ class MouseRecorderGUI(QMainWindow):
         self.create_settings_tab()
         
         # Status bar
-        self.statusBar().showMessage("Ready")
+        self.safe_status_message("Ready")
         
     def create_recording_tab(self):
         """Create the recording tab"""
@@ -558,14 +568,14 @@ Ready to replay!"""
         self.start_record_button.setEnabled(False)
         self.stop_record_button.setEnabled(True)
         self.recording_status.setText("Status: Recording... (Press ESC to stop)")
-        self.statusBar().showMessage("Recording in progress...")
+        self.safe_status_message("Recording in progress...")
         
     def on_recording_stopped(self, filename, event_count):
         """Handle recording stopped"""
         self.start_record_button.setEnabled(True)
         self.stop_record_button.setEnabled(False)
         self.recording_status.setText(f"Status: Recording completed! ({event_count} events)")
-        self.statusBar().showMessage(f"Recording saved: {filename}")
+        self.safe_status_message(f"Recording saved: {filename}")
         
         # Update file info
         self.current_recording_file = filename
@@ -586,7 +596,7 @@ Ready to replay!"""
         self.start_record_button.setEnabled(True)
         self.stop_record_button.setEnabled(False)
         self.recording_status.setText("Status: Recording error occurred")
-        self.statusBar().showMessage("Recording failed")
+        self.safe_status_message("Recording failed")
         
         QMessageBox.critical(self, "Recording Error", f"Recording failed:\n\n{error_message}")
         
@@ -627,7 +637,7 @@ Ready to replay!"""
         self.replay_progress_bar.setVisible(True)
         self.replay_progress_bar.setValue(0)
         self.replay_status.setText("Status: Replaying...")
-        self.statusBar().showMessage("Replay in progress...")
+        self.safe_status_message("Replay in progress...")
         
     def on_replay_progress(self, percentage):
         """Handle replay progress update"""
@@ -639,7 +649,7 @@ Ready to replay!"""
         self.stop_replay_button.setEnabled(False)
         self.replay_progress_bar.setVisible(False)
         self.replay_status.setText("Status: Replay completed!")
-        self.statusBar().showMessage("Replay finished")
+        self.safe_status_message("Replay finished")
         
     def on_replay_error(self, error_message):
         """Handle replay error"""
@@ -647,7 +657,7 @@ Ready to replay!"""
         self.stop_replay_button.setEnabled(False)
         self.replay_progress_bar.setVisible(False)
         self.replay_status.setText("Status: Replay error occurred")
-        self.statusBar().showMessage("Replay failed")
+        self.safe_status_message("Replay failed")
         
         QMessageBox.critical(self, "Replay Error", f"Replay failed:\n\n{error_message}")
         
