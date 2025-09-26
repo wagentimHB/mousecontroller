@@ -17,7 +17,7 @@ class MouseRecorder:
     def __init__(self, output_file="mouse_recording.json"):
         self.output_file = output_file
         self.events = []
-        self.start_time = None
+        self.start_time = 0.0
         self.recording = False
         self.listener = None
         
@@ -109,21 +109,30 @@ class MouseRecorder:
                 if key == keyboard.Key.esc:
                     print("\nESC pressed - stopping recording...")
                     self.stop_recording()
-                    return False  # Stop listener
+                    # Return False to stop the listener
+                    keyboard_listener.stop()
             except AttributeError:
                 pass
                 
+        def on_key_release(key):
+            # We don't need to handle key release, but include for completeness
+            pass
+                
         # Start keyboard listener in a separate thread
-        keyboard_listener = keyboard.Listener(on_press=on_key_press)
+        keyboard_listener = keyboard.Listener(
+            on_press=on_key_press,
+            on_release=on_key_release
+        )
         keyboard_listener.start()
         keyboard_listener.join()
         
     def save_recording(self):
         """Save recorded events to JSON file"""
+        duration = time.time() - self.start_time if self.start_time > 0 else 0.0
         recording_data = {
             "metadata": {
                 "created_at": datetime.now().isoformat(),
-                "duration": time.time() - self.start_time if self.start_time else 0,
+                "duration": duration,
                 "event_count": len(self.events)
             },
             "events": self.events
