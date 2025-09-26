@@ -20,15 +20,24 @@ class MouseRecorder:
         self.start_time = 0.0
         self.recording = False
         self.listener = None
+        self.timer_thread = None
+        self.timer_stop_event = threading.Event()
         
     def start_recording(self):
         """Start recording mouse events"""
-        print(f"Starting mouse recording... Press ESC to stop")
+        print("Starting mouse recording... Press ESC to stop")
         print(f"Recording will be saved to: {self.output_file}")
+        print("Recording time: 00:00:00", end="", flush=True)
         
         self.recording = True
         self.start_time = time.time()
         self.events = []
+        self.timer_stop_event.clear()
+        
+        # Start timer display thread
+        self.timer_thread = threading.Thread(target=self._display_timer)
+        self.timer_thread.daemon = True
+        self.timer_thread.start()
         
         # Start mouse listener
         self.listener = mouse.Listener(
@@ -48,12 +57,40 @@ class MouseRecorder:
             return
             
         self.recording = False
+        
+        # Stop timer display
+        self.timer_stop_event.set()
+        if self.timer_thread and self.timer_thread.is_alive():
+            self.timer_thread.join(timeout=1.0)
+        
         if self.listener:
             self.listener.stop()
         
         self.save_recording()
-        print(f"\nRecording stopped. {len(self.events)} events recorded.")
+        duration = (time.time() - self.start_time
+                    if self.start_time > 0 else 0.0)
+        print(f"\n\nRecording stopped. {len(self.events)} events recorded.")
+        print(f"Total recording time: {self._format_time(duration)}")
         print(f"Recording saved to: {self.output_file}")
+    
+    def _display_timer(self):
+        """Display the elapsed recording time in real-time"""
+        while not self.timer_stop_event.is_set():
+            if self.recording and self.start_time > 0:
+                elapsed = time.time() - self.start_time
+                time_str = self._format_time(elapsed)
+                # Move cursor back and overwrite the time display
+                print(f"\rRecording time: {time_str}", end="", flush=True)
+            
+            # Update every 0.1 seconds for smooth display
+            self.timer_stop_event.wait(0.1)
+    
+    def _format_time(self, seconds):
+        """Format seconds into HH:MM:SS format"""
+        hours = int(seconds // 3600)
+        minutes = int((seconds % 3600) // 60)
+        secs = int(seconds % 60)
+        return f"{hours:02d}:{minutes:02d}:{secs:02d}"
         
     def on_move(self, x, y):
         """Handle mouse move events"""
@@ -82,7 +119,8 @@ class MouseRecorder:
             "timestamp": time.time() - self.start_time
         }
         self.events.append(event)
-        print(f"{'Press' if pressed else 'Release'} {button.name} at ({x}, {y})")
+        action = 'Press' if pressed else 'Release'
+        print(f"{action} {button.name} at ({x}, {y})")
         
     def on_scroll(self, x, y, dx, dy):
         """Handle mouse scroll events"""
@@ -107,7 +145,7 @@ class MouseRecorder:
         def on_key_press(key):
             try:
                 if key == keyboard.Key.esc:
-                    print("\nESC pressed - stopping recording...")
+                    print("\n\nESC pressed - stopping recording...")
                     self.stop_recording()
                     # Return False to stop the listener
                     keyboard_listener.stop()
@@ -128,7 +166,8 @@ class MouseRecorder:
         
     def save_recording(self):
         """Save recorded events to JSON file"""
-        duration = time.time() - self.start_time if self.start_time > 0 else 0.0
+        duration = (time.time() - self.start_time
+                    if self.start_time > 0 else 0.0)
         recording_data = {
             "metadata": {
                 "created_at": datetime.now().isoformat(),
@@ -139,7 +178,8 @@ class MouseRecorder:
         }
         
         # Create directory if it doesn't exist
-        os.makedirs(os.path.dirname(os.path.abspath(self.output_file)), exist_ok=True)
+        output_dir = os.path.dirname(os.path.abspath(self.output_file))
+        os.makedirs(output_dir, exist_ok=True)
         
         try:
             with open(self.output_file, 'w') as f:
