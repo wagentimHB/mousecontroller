@@ -1,0 +1,21 @@
+{
+    "folders": [
+        {
+            "path": "."
+        }
+    ],
+    "settings": {
+        "python.pythonPath": "./venv/Scripts/python.exe",
+        "python.defaultInterpreterPath": "./venv/Scripts/python.exe",
+        "python.terminal.activateEnvironment": true,
+        "python.terminal.activateEnvInCurrentTerminal": true
+    },
+    "extensions": {
+        "recommendations": [
+            "ms-python.python",
+            "ms-python.debugpy",
+            "ms-python.flake8",
+            "ms-python.black-formatter"
+        ]
+    }
+}
