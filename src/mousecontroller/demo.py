@@ -6,33 +6,23 @@ Demonstrates how to use the mouse recording and replay functionality
 
 import os
 import sys
-import importlib.util
 from pathlib import Path
 
-# Add the src directory to the Python path
-src_path = Path(__file__).parent.parent / "mousecontroller"
-sys.path.insert(0, str(src_path))
+# Add the utils directory to the Python path
+current_dir = Path(__file__).parent
+if str(current_dir) not in sys.path:
+    sys.path.insert(0, str(current_dir))
 
-# Import modules dynamically to avoid linting issues
-def import_module_from_path(module_name, file_path):
-    """Import a module from a specific file path"""
-    spec = importlib.util.spec_from_file_location(module_name, file_path)
-    if spec is None or spec.loader is None:
-        raise ImportError(f"Cannot load module {module_name} from {file_path}")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+# Import utilities and classes
+from utils import get_mousecontroller_modules
 
 # Import our modules
 try:
-    current_dir = Path(__file__).parent
-    mouse_recorder_module = import_module_from_path("mouse_recorder", current_dir / "mouse_recorder.py")
-    mouse_replayer_module = import_module_from_path("mouse_replayer", current_dir / "mouse_replayer.py")
-    MouseRecorder = mouse_recorder_module.MouseRecorder
-    MouseReplayer = mouse_replayer_module.MouseReplayer
+    MouseRecorder, MouseReplayer = get_mousecontroller_modules(current_dir)
 except ImportError as e:
     print(f"Error importing required modules: {e}")
-    print("Please ensure mouse_recorder.py and mouse_replayer.py are in the same directory.")
+    print("Please ensure mouse_recorder.py and mouse_replayer.py are in the "
+          "same directory.")
     sys.exit(1)
 
 

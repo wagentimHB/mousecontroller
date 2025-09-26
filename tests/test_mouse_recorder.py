@@ -7,31 +7,25 @@ import os
 import json
 import tempfile
 import sys
-import importlib.util
 from pathlib import Path
 
 # Add src to path before any imports
-src_path = Path(__file__).parent.parent / "src" / "mousecontroller"
+src_path = Path(__file__).parent.parent / "src"
+mousecontroller_path = src_path / "mousecontroller"
 sys.path.insert(0, str(src_path))
+sys.path.insert(0, str(mousecontroller_path))
 
-# Dynamic import to avoid linting issues
-def import_module_from_path(module_name, file_path):
-    spec = importlib.util.spec_from_file_location(module_name, file_path)
-    if spec is None or spec.loader is None:
-        raise ImportError(f"Cannot load module {module_name} from {file_path}")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+# Import utilities and classes
+from mousecontroller.utils import get_mousecontroller_modules
 
 # Import our modules dynamically
-mouse_recorder_path = src_path / "mouse_recorder.py"
-mouse_replayer_path = src_path / "mouse_replayer.py"
-
-mouse_recorder_module = import_module_from_path("mouse_recorder", mouse_recorder_path)
-mouse_replayer_module = import_module_from_path("mouse_replayer", mouse_replayer_path)
-
-MouseRecorder = mouse_recorder_module.MouseRecorder
-MouseReplayer = mouse_replayer_module.MouseReplayer
+try:
+    MouseRecorder, MouseReplayer = get_mousecontroller_modules(
+        mousecontroller_path
+    )
+except ImportError as e:
+    print(f"Error importing modules: {e}")
+    sys.exit(1)
 
 
 def test_recorder_creation():
