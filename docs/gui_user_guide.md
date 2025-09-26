@@ -58,7 +58,7 @@ python run_gui.py
 launch_gui.bat
 
 # Method 3: Run from src directory
-python src/test/mouse_recorder_gui.py
+python src/mousecontroller/mouse_recorder_gui.py
 ```
 
 ## How to Use
@@ -226,7 +226,7 @@ from src.test.mouse_recorder_gui import MouseRecorderGUI
 
 ### Project Structure
 ```
-src/test/
+src/mousecontroller/
 ├── mouse_recorder_gui.py      # Main GUI application
 ├── mouse_recorder.py          # Recording backend
 ├── mouse_replayer.py          # Replay backend

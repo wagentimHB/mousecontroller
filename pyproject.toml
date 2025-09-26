@@ -3,9 +3,9 @@ requires = ["setuptools>=45", "wheel", "setuptools_scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "test"
+name = "mousecontroller"
 version = "0.1.0"
-description = "A Python project"
+description = "A Python mouse recording and replay tool with GUI"
 readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
@@ -25,9 +25,9 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/test"
-Repository = "https://github.com/yourusername/test.git"
-Issues = "https://github.com/yourusername/test/issues"
+Homepage = "https://github.com/yourusername/mousecontroller"
+Repository = "https://github.com/yourusername/mousecontroller.git"
+Issues = "https://github.com/yourusername/mousecontroller/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]

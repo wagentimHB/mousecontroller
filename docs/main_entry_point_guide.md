@@ -7,7 +7,7 @@ A comprehensive command-line interface and entry point for the Mouse Recorder & 
 ### Interactive Mode (Recommended for beginners)
 ```bash
 # Run without arguments for interactive menu
-python src/test/main.py
+python src/mousecontroller/main.py
 
 # Or use the root launcher
 python mouse_recorder.py
@@ -16,19 +16,19 @@ python mouse_recorder.py
 ### Command Line Mode
 ```bash
 # Record mouse actions
-python src/test/main.py record -o my_recording.json
+python src/mousecontroller/main.py record -o my_recording.json
 
 # Replay recording
-python src/test/main.py replay my_recording.json
+python src/mousecontroller/main.py replay my_recording.json
 
 # Launch GUI
-python src/test/main.py gui
+python src/mousecontroller/main.py gui
 
 # Show recording information  
-python src/test/main.py info my_recording.json
+python src/mousecontroller/main.py info my_recording.json
 
 # List all recordings
-python src/test/main.py list
+python src/mousecontroller/main.py list
 ```
 
 ## Available Commands
@@ -37,14 +37,14 @@ python src/test/main.py list
 Record mouse movements, clicks, and scroll actions.
 
 ```bash
-python src/test/main.py record [OPTIONS]
+python src/mousecontroller/main.py record [OPTIONS]
 
 Options:
   -o, --output FILE    Output file path (default: data/mouse_recording.json)
 
 Examples:
-  python src/test/main.py record                     # Use default filename
-  python src/test/main.py record -o session1.json   # Custom filename
+  python src/mousecontroller/main.py record                     # Use default filename
+  python src/mousecontroller/main.py record -o session1.json   # Custom filename
 ```
 
 **During Recording:**
@@ -56,23 +56,23 @@ Examples:
 Replay previously recorded mouse actions with configurable settings.
 
 ```bash
-python src/test/main.py replay FILE [OPTIONS]
+python src/mousecontroller/main.py replay FILE [OPTIONS]
 
 Options:
   -s, --speed FLOAT    Replay speed multiplier (default: 1.0)
   -d, --delay INT      Delay in seconds before starting (default: 3)
 
 Examples:
-  python src/test/main.py replay recording.json              # Normal speed
-  python src/test/main.py replay recording.json -s 0.5       # Half speed
-  python src/test/main.py replay recording.json -s 2 -d 5    # Double speed, 5s delay
+  python src/mousecontroller/main.py replay recording.json              # Normal speed
+  python src/mousecontroller/main.py replay recording.json -s 0.5       # Half speed
+  python src/mousecontroller/main.py replay recording.json -s 2 -d 5    # Double speed, 5s delay
 ```
 
 ### 🖥️ `gui` - Launch GUI Interface
 Open the PyQt6 graphical user interface for easy recording and replaying.
 
 ```bash
-python src/test/main.py gui
+python src/mousecontroller/main.py gui
 ```
 
 The GUI provides:
@@ -86,10 +86,10 @@ The GUI provides:
 Display detailed information about a recording file.
 
 ```bash
-python src/test/main.py info FILE
+python src/mousecontroller/main.py info FILE
 
 Example:
-  python src/test/main.py info my_recording.json
+  python src/mousecontroller/main.py info my_recording.json
 ```
 
 Shows:
@@ -103,14 +103,14 @@ Shows:
 List all recording files in a directory with their metadata.
 
 ```bash
-python src/test/main.py list [OPTIONS]
+python src/mousecontroller/main.py list [OPTIONS]
 
 Options:
   -d, --directory DIR  Directory to search (default: data)
 
 Examples:
-  python src/test/main.py list           # List files in data/ directory
-  python src/test/main.py list -d /tmp   # List files in custom directory
+  python src/mousecontroller/main.py list           # List files in data/ directory
+  python src/mousecontroller/main.py list -d /tmp   # List files in custom directory
 ```
 
 ## Interactive Menu
@@ -134,7 +134,7 @@ This is perfect for users who prefer a guided experience over command-line argum
 
 ### Method 1: Direct Main Module
 ```bash
-python src/test/main.py [COMMAND] [OPTIONS]
+python src/mousecontroller/main.py [COMMAND] [OPTIONS]
 ```
 
 ### Method 2: Root Launcher
@@ -157,39 +157,39 @@ python run_gui.py
 ### Example 1: Basic Recording and Replay
 ```bash
 # Step 1: Record a session
-python src/test/main.py record -o demo.json
+python src/mousecontroller/main.py record -o demo.json
 
 # Step 2: View the recording info
-python src/test/main.py info demo.json
+python src/mousecontroller/main.py info demo.json
 
 # Step 3: Replay at normal speed
-python src/test/main.py replay demo.json
+python src/mousecontroller/main.py replay demo.json
 ```
 
 ### Example 2: Advanced Replay Options
 ```bash
 # Record first
-python src/test/main.py record -o complex_task.json
+python src/mousecontroller/main.py record -o complex_task.json
 
 # Replay slowly for precision
-python src/test/main.py replay complex_task.json -s 0.3 -d 5
+python src/mousecontroller/main.py replay complex_task.json -s 0.3 -d 5
 
 # Replay quickly for demo
-python src/test/main.py replay complex_task.json -s 3.0 -d 1
+python src/mousecontroller/main.py replay complex_task.json -s 3.0 -d 1
 ```
 
 ### Example 3: Managing Multiple Recordings
 ```bash
 # Create several recordings
-python src/test/main.py record -o task1.json
-python src/test/main.py record -o task2.json
-python src/test/main.py record -o task3.json
+python src/mousecontroller/main.py record -o task1.json
+python src/mousecontroller/main.py record -o task2.json
+python src/mousecontroller/main.py record -o task3.json
 
 # List all recordings
-python src/test/main.py list
+python src/mousecontroller/main.py list
 
 # Get info on specific recording
-python src/test/main.py info task2.json
+python src/mousecontroller/main.py info task2.json
 ```
 
 ## Integration with Other Tools
@@ -198,7 +198,7 @@ python src/test/main.py info task2.json
 ```bash
 # Create a batch script to replay multiple recordings
 for file in data/*.json; do
-    python src/test/main.py replay "$file" -s 2.0
+    python src/mousecontroller/main.py replay "$file" -s 2.0
 done
 ```
 
@@ -209,7 +209,7 @@ import sys
 
 # Record via script
 result = subprocess.run([
-    sys.executable, "src/test/main.py", "record", 
+    sys.executable, "src/mousecontroller/main.py", "record", 
     "-o", "automated_recording.json"
 ], capture_output=True, text=True)
 
@@ -264,20 +264,20 @@ File Size: 2048 bytes
 Set environment variable for detailed logging:
 ```bash
 export MOUSE_RECORDER_DEBUG=1
-python src/test/main.py record
+python src/mousecontroller/main.py record
 ```
 
 ### Module Testing
 Test individual components:
 ```bash
 # Test recording module
-python -c "from test.mouse_recorder import MouseRecorder; print('Recording module OK')"
+python -c "from mousecontroller.mouse_recorder import MouseRecorder; print('Recording module OK')"
 
 # Test replay module  
-python -c "from test.mouse_replayer import MouseReplayer; print('Replay module OK')"
+python -c "from mousecontroller.mouse_replayer import MouseReplayer; print('Replay module OK')"
 
 # Test GUI module
-python -c "from test.mouse_recorder_gui import MouseRecorderGUI; print('GUI module OK')"
+python -c "from mousecontroller.mouse_recorder_gui import MouseRecorderGUI; print('GUI module OK')"
 ```
 
 ## Platform-Specific Notes
@@ -305,7 +305,7 @@ python -c "from test.mouse_recorder_gui import MouseRecorderGUI; print('GUI modu
 ```bash
 # Make sure you're in the project directory
 cd /path/to/mouse_recorder_project
-python src/test/main.py --help
+python src/mousecontroller/main.py --help
 ```
 
 **Import errors:**
@@ -336,4 +336,4 @@ python -c "import PyQt6; print('PyQt6 OK')"
 
 **Version**: 1.0.0  
 **Last Updated**: September 26, 2025  
-**Entry Point**: `src/test/main.py`
+**Entry Point**: `src/mousecontroller/main.py`

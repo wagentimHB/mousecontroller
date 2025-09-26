@@ -14,7 +14,7 @@ if str(src_path) not in sys.path:
     sys.path.insert(0, str(src_path))
 
 # Import and run the GUI via main entry point
-from test.main import cmd_gui
+from mousecontroller.main import cmd_gui
 
 class GuiArgs:
     pass

@@ -28,13 +28,13 @@ The required dependencies are already installed in your virtual environment:
 Run the mouse recorder:
 
 ```bash
-python src/test/mouse_recorder.py
+python src/mousecontroller/mouse_recorder.py
 ```
 
 Or specify a custom output file:
 
 ```bash
-python src/test/mouse_recorder.py data/my_recording.json
+python src/mousecontroller/mouse_recorder.py data/my_recording.json
 ```
 
 **How to record:**
@@ -48,13 +48,13 @@ python src/test/mouse_recorder.py data/my_recording.json
 Run the mouse replayer:
 
 ```bash
-python src/test/mouse_replayer.py
+python src/mousecontroller/mouse_replayer.py
 ```
 
 Or specify a custom recording file:
 
 ```bash
-python src/test/mouse_replayer.py data/my_recording.json
+python src/mousecontroller/mouse_replayer.py data/my_recording.json
 ```
 
 **Replay options:**
@@ -69,7 +69,7 @@ python src/test/mouse_replayer.py data/my_recording.json
 For a guided experience, run the demo:
 
 ```bash
-python src/test/demo.py
+python src/mousecontroller/demo.py
 ```
 
 This provides an interactive menu to try both recording and replaying.
@@ -77,7 +77,7 @@ This provides an interactive menu to try both recording and replaying.
 ## File Structure
 
 ```
-src/test/
+src/mousecontroller/
 ├── mouse_recorder.py    # Main recording script
 ├── mouse_replayer.py    # Main replay script
 ├── demo.py             # Interactive demo
@@ -188,7 +188,7 @@ Recordings are saved in JSON format with the following structure:
 ### Example 1: Record a simple sequence
 ```bash
 # Start recording
-python src/test/mouse_recorder.py
+python src/mousecontroller/mouse_recorder.py
 
 # Move mouse, click a few times, then press ESC
 # Recording saved to data/mouse_recording.json
@@ -197,12 +197,12 @@ python src/test/mouse_recorder.py
 ### Example 2: Replay at half speed
 ```bash
 # Replay with interactive menu
-python src/test/mouse_replayer.py
+python src/mousecontroller/mouse_replayer.py
 # Choose option 2 for half speed
 ```
 
 ### Example 3: Command line replay
 ```bash
 # Direct replay at double speed
-python src/test/mouse_replayer.py data/mouse_recording.json 2.0
+python src/mousecontroller/mouse_replayer.py data/mouse_recording.json 2.0
 ```

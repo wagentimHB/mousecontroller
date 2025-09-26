@@ -16,8 +16,8 @@ src_path = project_root / "src"
 if str(src_path) not in sys.path:
     sys.path.insert(0, str(src_path))
 
-from test.mouse_recorder import MouseRecorder
-from test.mouse_replayer import MouseReplayer
+from mousecontroller.mouse_recorder import MouseRecorder
+from mousecontroller.mouse_replayer import MouseReplayer
 
 
 class TestMouseRecorder(unittest.TestCase):

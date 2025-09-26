@@ -11,7 +11,7 @@ import importlib.util
 from pathlib import Path
 
 # Add src to path before any imports
-src_path = Path(__file__).parent.parent / "src" / "test"
+src_path = Path(__file__).parent.parent / "src" / "mousecontroller"
 sys.path.insert(0, str(src_path))
 
 # Dynamic import to avoid linting issues

@@ -3,7 +3,7 @@ Tests for test main module.
 """
 
 import pytest
-from src.test.main import main
+from src.mousecontroller.main import main
 
 
 def test_main():
@@ -20,4 +20,4 @@ def test_main_output(capsys):
     """Test main function output."""
     main()
     captured = capsys.readouterr()
-    assert "Hello from test!" in captured.out
+    assert "Hello from mousecontroller!" in captured.out

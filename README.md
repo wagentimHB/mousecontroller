@@ -74,65 +74,67 @@ cd mouse-recorder-replayer## Usage
 
 
 
-# Create virtual environment (recommended)```python
+# Create virtual environment (recommended)
+python -m venv venv
 
-python -m venv venvfrom src.test.main import main
-
-
-
-# Activate virtual environmentmain()
-
-# Windows:```
-
+# Activate virtual environment
+# Windows:
 venv\Scripts\activate
+# macOS/Linux:
+source venv/bin/activate
 
-# macOS/Linux:Or run directly:
-
-source venv/bin/activate```bash
-
-python src/test/main.py
-
-# Install dependencies```
-
+# Install dependencies
 pip install -r requirements.txt
+```
 
-```## Testing
+### Basic Usage
 
-
-
-### Basic UsageRun tests with pytest:
-
+#### 🎭 Interactive Mode (Beginner-friendly)
 ```bash
-
-#### 🎭 Interactive Mode (Beginner-friendly)pytest
-
-```bash```
-
 python mouse_recorder.py
 
-```Run tests with coverage:
-
+#### ⌨️ Command Line Mode
 ```bash
-
-#### ⌨️ Command Line Modepytest --cov=src/test
-
-```bash```
-
 # Record mouse actions
+python mouse_recorder.py record -o my_session.json
 
-python mouse_recorder.py record -o my_session.json## Project Structure
+# Replay recording
+python mouse_recorder.py replay my_session.json
 
+# Launch GUI
+python mouse_recorder.py gui
 
+# Show recording info
+python mouse_recorder.py info my_session.json
 
-# Replay recording```
+# List all recordings
+python mouse_recorder.py list
+```
 
-python mouse_recorder.py replay my_session.jsontest/
+Or run directly:
+```bash
+python src/mousecontroller/main.py
+```
 
+## Testing
+
+Run tests with pytest:
+```bash
+pytest
+```
+
+Run tests with coverage:
+```bash
+pytest --cov=src/mousecontroller
+```
+
+## Project Structure
+
+```
+test/
 ├── src/
-
-# Launch GUI│   └── test/
-
-python mouse_recorder.py gui│       ├── __init__.py
+│   └── mousecontroller/              # Core application modules
+│       ├── __init__.py
 
 │       └── main.py
 
@@ -197,7 +199,7 @@ launch_gui.bat[Add contribution guidelines here]
 
 ```
 mouse-recorder-replayer/
-├── 📁 src/test/                    # Core application modules
+├── 📁 src/mousecontroller/           # Core application modules
 │   ├── main.py                     # Main entry point with CLI
 │   ├── mouse_recorder.py           # Recording functionality
 │   ├── mouse_replayer.py           # Replay functionality
