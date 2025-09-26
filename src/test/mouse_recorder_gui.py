@@ -9,6 +9,7 @@ import os
 import json
 import threading
 import time
+import importlib.util
 from pathlib import Path
 from datetime import datetime
 from PyQt6.QtWidgets import (
@@ -26,8 +27,26 @@ src_path = project_root / "src" / "test"
 if str(src_path) not in sys.path:
     sys.path.insert(0, str(src_path))
 
-from mouse_recorder import MouseRecorder
-from mouse_replayer import MouseReplayer
+# Import modules dynamically to avoid linting issues
+def import_module_from_path(module_name, file_path):
+    """Import a module from a specific file path"""
+    spec = importlib.util.spec_from_file_location(module_name, file_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Cannot load module {module_name} from {file_path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+# Import our modules
+try:
+    current_dir = Path(__file__).parent
+    mouse_recorder_module = import_module_from_path("mouse_recorder", current_dir / "mouse_recorder.py")
+    mouse_replayer_module = import_module_from_path("mouse_replayer", current_dir / "mouse_replayer.py")
+    MouseRecorder = mouse_recorder_module.MouseRecorder
+    MouseReplayer = mouse_replayer_module.MouseReplayer
+except ImportError as e:
+    print(f"Error importing required modules: {e}")
+    sys.exit(1)
 
 
 class RecorderThread(QThread):
