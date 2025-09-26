@@ -9,8 +9,10 @@ import sys
 import os
 import json
 import time
+import threading
 import importlib.util
 from pathlib import Path
+from typing import Any, Union
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QLabel, QLineEdit, QTextEdit, QGroupBox, QSlider,
@@ -27,7 +29,9 @@ if str(src_path) not in sys.path:
 
 
 # Import modules dynamically to avoid linting issues
-def import_module_from_path(module_name, file_path):
+def import_module_from_path(
+    module_name: str, file_path: Union[str, Path]
+) -> Any:
     """Import a module from a specific file path"""
     spec = importlib.util.spec_from_file_location(module_name, file_path)
     if spec is None or spec.loader is None:
@@ -58,15 +62,18 @@ class RecorderThread(QThread):
     recording_started = pyqtSignal()
     recording_stopped = pyqtSignal(str, int)  # filename, event_count
     recording_error = pyqtSignal(str)
+    timer_update = pyqtSignal(str)  # timer display string
+    status_blink = pyqtSignal(bool)  # blinking status indicator
     
-    def __init__(self, output_file):
+    def __init__(self, output_file: str) -> None:
         super().__init__()
         self.output_file = output_file
         self.recorder = None
         
-    def run(self):
+    def run(self) -> None:
         try:
-            self.recorder = MouseRecorder(self.output_file)
+            # Create a custom recorder that supports GUI timer updates
+            self.recorder = self._create_gui_recorder(self.output_file)
             self.recording_started.emit()
             self.recorder.start_recording()
             # Recording stops when ESC is pressed
@@ -77,9 +84,83 @@ class RecorderThread(QThread):
         except Exception as e:
             self.recording_error.emit(str(e))
     
-    def stop_recording(self):
+    def _create_gui_recorder(self, output_file: str) -> Any:
+        """Create a MouseRecorder with GUI timer updates"""
+        recorder = MouseRecorder(output_file)
+        
+        # Import mouse from pynput for listener
+        from pynput import mouse
+        
+        # Override the start_recording method to not print console messages
+        def gui_start_recording():
+            recorder.recording = True
+            recorder.start_time = time.time()
+            recorder.events = []
+            recorder.timer_stop_event.clear()
+            
+            # Start timer display thread (GUI version)
+            recorder.timer_thread = threading.Thread(target=gui_display_timer)
+            recorder.timer_thread.daemon = True
+            recorder.timer_thread.start()
+            
+            # Start mouse listener
+            recorder.listener = mouse.Listener(
+                on_move=recorder.on_move,
+                on_click=recorder.on_click,
+                on_scroll=recorder.on_scroll
+            )
+            
+            recorder.listener.start()
+            
+            # Monitor for ESC key to stop recording
+            recorder._monitor_stop_key()
+        
+        # Override the _display_timer method to emit GUI updates
+        def gui_display_timer():
+            blink_counter = 0
+            while not recorder.timer_stop_event.is_set():
+                if recorder.recording and recorder.start_time > 0:
+                    elapsed = time.time() - recorder.start_time
+                    time_str = recorder._format_time(elapsed)
+                    # Emit just the time string for GUI display
+                    self.timer_update.emit(time_str)
+                    
+                    # Emit blinking status every 10 cycles (1 second)
+                    blink_counter += 1
+                    if blink_counter >= 10:
+                        self.status_blink.emit(True)
+                        blink_counter = 0
+                    elif blink_counter == 5:
+                        self.status_blink.emit(False)
+                
+                # Update every 0.1 seconds for smooth display
+                recorder.timer_stop_event.wait(0.1)
+        
+        # Override methods that print to console
+        recorder.start_recording = gui_start_recording
+        recorder._display_timer = gui_display_timer
+        
+        return recorder
+    
+    def stop_recording(self) -> None:
+        """Stop recording by simulating ESC key press - same as manual ESC"""
         if self.recorder and self.recorder.recording:
-            self.recorder.stop_recording()
+            try:
+                # Import pynput to simulate ESC key press
+                from pynput.keyboard import Key, Controller
+                
+                # Create keyboard controller and send ESC key
+                keyboard_controller = Controller()
+                keyboard_controller.press(Key.esc)
+                keyboard_controller.release(Key.esc)
+                
+            except ImportError:
+                # Fallback to direct stop if pynput not available
+                self.recorder.stop_recording()
+            except Exception as e:
+                # Fallback to direct stop if any error occurs
+                print(f"Error simulating ESC key: {e}")
+                self.recorder.stop_recording()
 
 
 class ReplayThread(QThread):
@@ -149,10 +230,12 @@ class ReplayThread(QThread):
             replay_count += 1
             remaining_time = end_time - time.time()
             
-            self.replay_count_update.emit(replay_count, -1)  # -1 indicates time-based
+            # -1 indicates time-based replay mode
+            self.replay_count_update.emit(replay_count, -1)
             
             # Check if we have enough time for complete replay
-            recording_duration = self.replayer.recording_data['metadata']['duration'] / self.speed
+            metadata = self.replayer.recording_data['metadata']
+            recording_duration = metadata['duration'] / self.speed
             if remaining_time < recording_duration:
                 break
             
@@ -173,7 +256,10 @@ class ReplayThread(QThread):
                 self.replayer._execute_event(event)
                 
                 # Update progress based on time remaining
-                time_progress = int(((time.time() - (end_time - self.replay_hours * 3600)) / (self.replay_hours * 3600)) * 100)
+                start_time = end_time - self.replay_hours * 3600
+                elapsed_time = time.time() - start_time
+                total_time = self.replay_hours * 3600
+                time_progress = int((elapsed_time / total_time) * 100)
                 self.replay_progress.emit(min(time_progress, 100))
             
             # Configurable pause between replays
@@ -351,12 +437,72 @@ class MouseRecorderGUI(QMainWindow):
         self.recording_status = QLabel("Status: Ready to record")
         self.recording_status.setStyleSheet("font-size: 14px; color: #333;")
         
+        # Recording timer container with dedicated design
+        self.timer_container = QGroupBox("Recording Timer")
+        self.timer_container.setStyleSheet("""
+            QGroupBox {
+                font-size: 12px;
+                font-weight: bold;
+                color: #333;
+                border: 2px solid #ddd;
+                border-radius: 8px;
+                margin-top: 10px;
+                padding-top: 10px;
+                background-color: #f8f9fa;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 8px 0 8px;
+                color: #666;
+            }
+        """)
+        self.timer_container.hide()  # Initially hidden
+        
+        timer_layout = QVBoxLayout(self.timer_container)
+        timer_layout.setSpacing(5)
+        
+        # Main timer display
+        self.recording_timer = QLabel("00:00:00")
+        self.recording_timer.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        timer_display_style = """
+            QLabel {
+                font-family: 'Courier New', monospace;
+                font-size: 32px;
+                font-weight: bold;
+                color: #dc3545;
+                background-color: #000;
+                border: 3px solid #333;
+                border-radius: 8px;
+                padding: 10px 20px;
+                margin: 5px;
+            }
+        """
+        self.recording_timer.setStyleSheet(timer_display_style)
+        
+        # Timer status label
+        self.timer_status = QLabel("● RECORDING")
+        self.timer_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.timer_status.setStyleSheet("""
+            QLabel {
+                font-size: 14px;
+                font-weight: bold;
+                color: #dc3545;
+                background-color: transparent;
+                padding: 5px;
+            }
+        """)
+        
+        timer_layout.addWidget(self.recording_timer)
+        timer_layout.addWidget(self.timer_status)
+        
         button_layout = QHBoxLayout()
         button_layout.addWidget(self.start_record_button)
         button_layout.addWidget(self.stop_record_button)
         
         controls_layout.addLayout(button_layout)
         controls_layout.addWidget(self.recording_status)
+        controls_layout.addWidget(self.timer_container)
         
         # Recording info group
         info_group = QGroupBox("Recording Information")
@@ -614,7 +760,8 @@ class MouseRecorderGUI(QMainWindow):
         about_text = QLabel("""
         <h3>Mouse Recorder & Replayer</h3>
         <p><b>Version:</b> 1.0.0</p>
-        <p><b>Description:</b> A GUI application for recording and replaying mouse actions</p>
+        <p><b>Description:</b> A GUI application for recording and
+        replaying mouse actions</p>
         <p><b>Features:</b></p>
         <ul>
         <li>Record mouse movements, clicks, and scrolls</li>
@@ -710,7 +857,8 @@ File Size: {os.path.getsize(filename)} bytes"""
             except Exception as e:
                 self.recording_info.setPlainText(f"Error reading file: {e}")
         else:
-            self.recording_info.setPlainText(f"File does not exist: {filename}")
+            error_msg = f"File does not exist: {filename}"
+            self.recording_info.setPlainText(error_msg)
             
     def update_replay_file_info(self, filename):
         """Update replay file information"""
@@ -738,7 +886,10 @@ Ready to replay!"""
         """Start mouse recording"""
         filename = self.file_input.text().strip()
         if not filename:
-            QMessageBox.warning(self, "Warning", "Please enter a filename for the recording.")
+            QMessageBox.warning(
+                self, "Warning",
+                "Please enter a filename for the recording."
+            )
             return
             
         # Create directory if needed
@@ -746,29 +897,54 @@ Ready to replay!"""
         
         # Start recording thread
         self.recorder_thread = RecorderThread(filename)
-        self.recorder_thread.recording_started.connect(self.on_recording_started)
-        self.recorder_thread.recording_stopped.connect(self.on_recording_stopped)
+        self.recorder_thread.recording_started.connect(
+            self.on_recording_started)
+        self.recorder_thread.recording_stopped.connect(
+            self.on_recording_stopped)
         self.recorder_thread.recording_error.connect(self.on_recording_error)
+        self.recorder_thread.timer_update.connect(self.on_timer_update)
+        self.recorder_thread.status_blink.connect(self.on_status_blink)
         
         self.recorder_thread.start()
         
     def stop_recording(self):
-        """Stop mouse recording"""
-        if self.recorder_thread:
-            self.recorder_thread.stop_recording()
+        """Stop mouse recording by simulating ESC key press"""
+        if self.recorder_thread and self.recorder_thread.recorder:
+            if self.recorder_thread.recorder.recording:
+                try:
+                    # Import pynput to simulate ESC key press
+                    from pynput.keyboard import Key, Controller
+                    
+                    # Create keyboard controller and send ESC key
+                    keyboard_controller = Controller()
+                    keyboard_controller.press(Key.esc)
+                    keyboard_controller.release(Key.esc)
+                    
+                except ImportError:
+                    # Fallback to direct thread stop if pynput not available
+                    self.recorder_thread.stop_recording()
+                except Exception as e:
+                    # Fallback to direct thread stop if any error occurs
+                    print(f"Error simulating ESC key: {e}")
+                    self.recorder_thread.stop_recording()
             
     def on_recording_started(self):
         """Handle recording started"""
         self.start_record_button.setEnabled(False)
         self.stop_record_button.setEnabled(True)
-        self.recording_status.setText("Status: Recording... (Press ESC to stop)")
+        status_text = "Status: Recording... (Press ESC to stop)"
+        self.recording_status.setText(status_text)
+        self.recording_timer.setText("00:00:00")
+        self.timer_container.show()  # Show the timer container
         self.safe_status_message("Recording in progress...")
         
     def on_recording_stopped(self, filename, event_count):
         """Handle recording stopped"""
         self.start_record_button.setEnabled(True)
         self.stop_record_button.setEnabled(False)
-        self.recording_status.setText(f"Status: Recording completed! ({event_count} events)")
+        status_text = f"Status: Recording completed! ({event_count} events)"
+        self.recording_status.setText(status_text)
+        self.timer_container.hide()  # Hide the timer container
         self.safe_status_message(f"Recording saved: {filename}")
         
         # Update file info
@@ -782,7 +958,9 @@ Ready to replay!"""
         QMessageBox.information(
             self,
             "Recording Complete",
-            f"Recording saved successfully!\n\nFile: {filename}\nEvents recorded: {event_count}"
+            f"Recording saved successfully!\n\n"
+            f"File: {filename}\n"
+            f"Events recorded: {event_count}"
         )
         
     def on_recording_error(self, error_message):
@@ -790,19 +968,58 @@ Ready to replay!"""
         self.start_record_button.setEnabled(True)
         self.stop_record_button.setEnabled(False)
         self.recording_status.setText("Status: Recording error occurred")
+        self.timer_container.hide()  # Hide the timer container
         self.safe_status_message("Recording failed")
         
-        QMessageBox.critical(self, "Recording Error", f"Recording failed:\n\n{error_message}")
+        QMessageBox.critical(
+            self, "Recording Error",
+            f"Recording failed:\n\n{error_message}"
+        )
+    
+    def on_timer_update(self, time_str):
+        """Handle timer update from recording thread"""
+        self.recording_timer.setText(time_str)
+    
+    def on_status_blink(self, show_indicator):
+        """Handle blinking recording indicator"""
+        if show_indicator:
+            self.timer_status.setText("● RECORDING")
+            self.timer_status.setStyleSheet("""
+                QLabel {
+                    font-size: 14px;
+                    font-weight: bold;
+                    color: #dc3545;
+                    background-color: transparent;
+                    padding: 5px;
+                }
+            """)
+        else:
+            self.timer_status.setText("○ RECORDING")
+            self.timer_status.setStyleSheet("""
+                QLabel {
+                    font-size: 14px;
+                    font-weight: bold;
+                    color: #6c757d;
+                    background-color: transparent;
+                    padding: 5px;
+                }
+            """)
         
     def start_replay(self):
         """Start mouse replay"""
         filename = self.replay_file_input.text().strip()
         if not filename:
-            QMessageBox.warning(self, "Warning", "Please select a recording file to replay.")
+            QMessageBox.warning(
+                self, "Warning",
+                "Please select a recording file to replay."
+            )
             return
             
         if not os.path.exists(filename):
-            QMessageBox.warning(self, "Warning", f"Recording file does not exist:\n{filename}")
+            QMessageBox.warning(
+                self, "Warning",
+                f"Recording file does not exist:\n{filename}"
+            )
             return
             
         speed = self.speed_slider.value() / 100.0
@@ -816,7 +1033,10 @@ Ready to replay!"""
             total_hours = hours + (minutes / 60.0)
             
             if total_hours <= 0:
-                QMessageBox.warning(self, "Warning", "Please set a valid time duration (hours/minutes).")
+                QMessageBox.warning(
+                    self, "Warning",
+                    "Please set a valid time duration (hours/minutes)."
+                )
                 return
                 
             replay_times = 1  # Not used in time-based mode
@@ -837,7 +1057,9 @@ Ready to replay!"""
         self.replay_thread.replay_progress.connect(self.on_replay_progress)
         self.replay_thread.replay_finished.connect(self.on_replay_finished)
         self.replay_thread.replay_error.connect(self.on_replay_error)
-        self.replay_thread.replay_count_update.connect(self.on_replay_count_update)
+        self.replay_thread.replay_count_update.connect(
+            self.on_replay_count_update
+        )
         
         self.replay_thread.start()
         

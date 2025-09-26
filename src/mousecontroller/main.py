@@ -15,6 +15,7 @@ current_dir = Path(__file__).parent
 if str(current_dir) not in sys.path:
     sys.path.insert(0, str(current_dir))
 
+
 # Import modules dynamically to avoid linting issues
 def import_module_from_path(module_name, file_path):
     """Import a module from a specific file path"""
@@ -25,15 +26,21 @@ def import_module_from_path(module_name, file_path):
     spec.loader.exec_module(module)
     return module
 
+
 # Import our modules
 try:
-    mouse_recorder_module = import_module_from_path("mouse_recorder", current_dir / "mouse_recorder.py")
-    mouse_replayer_module = import_module_from_path("mouse_replayer", current_dir / "mouse_replayer.py")
+    mouse_recorder_module = import_module_from_path(
+        "mouse_recorder", current_dir / "mouse_recorder.py"
+    )
+    mouse_replayer_module = import_module_from_path(
+        "mouse_replayer", current_dir / "mouse_replayer.py"
+    )
     MouseRecorder = mouse_recorder_module.MouseRecorder
     MouseReplayer = mouse_replayer_module.MouseReplayer
 except ImportError as e:
     print(f"Error importing required modules: {e}")
-    print("Please ensure mouse_recorder.py and mouse_replayer.py are in the same directory.")
+    print("Please ensure mouse_recorder.py and mouse_replayer.py are in the "
+          "same directory.")
     sys.exit(1)
 
 
@@ -49,7 +56,7 @@ def show_banner():
 
 def cmd_record(args):
     """Handle record command"""
-    print(f"Starting mouse recording...")
+    print("Starting mouse recording...")
     print(f"Output file: {args.output}")
     print("Move your mouse and click as needed. Press ESC to stop recording.")
     print("-" * 40)
@@ -57,7 +64,7 @@ def cmd_record(args):
     recorder = MouseRecorder(args.output)
     try:
         recorder.start_recording()
-        print(f"\n✅ Recording completed successfully!")
+        print("\n✅ Recording completed successfully!")
         print(f"📁 File saved: {args.output}")
         if recorder.events:
             print(f"📊 Events recorded: {len(recorder.events)}")
@@ -90,7 +97,7 @@ def cmd_replay(args):
         
     # Show recording info
     metadata = replayer.recording_data.get('metadata', {})
-    print(f"📄 Recording info:")
+    print("📄 Recording info:")
     print(f"   Duration: {metadata.get('duration', 0):.2f} seconds")
     print(f"   Events: {metadata.get('event_count', 0)}")
     print(f"   Created: {metadata.get('created_at', 'Unknown')}")
@@ -112,7 +119,9 @@ def cmd_gui(args):
     """Handle GUI command"""
     try:
         # Import GUI module dynamically
-        gui_module = import_module_from_path("mouse_recorder_gui", current_dir / "mouse_recorder_gui.py")
+        gui_module = import_module_from_path(
+            "mouse_recorder_gui", current_dir / "mouse_recorder_gui.py"
+        )
         print("🚀 Starting GUI application...")
         gui_module.main()
     except ImportError:
@@ -157,7 +166,7 @@ def cmd_info(args):
             event_type = event.get('type', 'unknown')
             event_types[event_type] = event_types.get(event_type, 0) + 1
             
-        print(f"\n📊 Event Breakdown:")
+        print("\n📊 Event Breakdown:")
         for event_type, count in event_types.items():
             print(f"   {event_type.capitalize()}: {count}")
     
@@ -187,13 +196,14 @@ def cmd_list_recordings(args):
                 metadata = replayer.recording_data.get('metadata', {})
                 duration = metadata.get('duration', 0)
                 event_count = metadata.get('event_count', 0)
-                created = metadata.get('created_at', 'Unknown')[:19].replace('T', ' ')
+                created_raw = metadata.get('created_at', 'Unknown')
+                created = created_raw[:19].replace('T', ' ')
                 
                 print(f"📄 {file_path.name}")
                 print(f"   Created: {created}")
                 print(f"   Duration: {duration:.2f}s | Events: {event_count}")
                 print()
-        except:
+        except Exception:
             print(f"❌ {file_path.name} (corrupted or invalid)")
             print()
     
@@ -203,7 +213,8 @@ def cmd_list_recordings(args):
 def create_parser():
     """Create command line argument parser"""
     parser = argparse.ArgumentParser(
-        description="Mouse Recorder & Replayer - Record and replay mouse actions",
+        description="Mouse Recorder & Replayer - Record and replay mouse "
+                    "actions",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -217,23 +228,29 @@ Examples:
         """
     )
     
-    subparsers = parser.add_subparsers(dest='command', help='Available commands')
+    subparsers = parser.add_subparsers(
+        dest='command', help='Available commands'
+    )
     
     # Record command
-    record_parser = subparsers.add_parser('record', help='Record mouse actions')
+    record_parser = subparsers.add_parser(
+        'record', help='Record mouse actions'
+    )
     record_parser.add_argument(
-        '-o', '--output', 
+        '-o', '--output',
         default='data/mouse_recording.json',
         help='Output file path (default: data/mouse_recording.json)'
     )
     record_parser.set_defaults(func=cmd_record)
     
-    # Replay command  
-    replay_parser = subparsers.add_parser('replay', help='Replay mouse actions')
+    # Replay command
+    replay_parser = subparsers.add_parser(
+        'replay', help='Replay mouse actions'
+    )
     replay_parser.add_argument('file', help='Recording file to replay')
     replay_parser.add_argument(
-        '-s', '--speed', 
-        type=float, 
+        '-s', '--speed',
+        type=float,
         default=1.0,
         help='Replay speed multiplier (default: 1.0)'
     )
@@ -250,7 +267,9 @@ Examples:
     gui_parser.set_defaults(func=cmd_gui)
     
     # Info command
-    info_parser = subparsers.add_parser('info', help='Show recording information')
+    info_parser = subparsers.add_parser(
+        'info', help='Show recording information'
+    )
     info_parser.add_argument('file', help='Recording file to analyze')
     info_parser.set_defaults(func=cmd_info)
     
@@ -274,7 +293,7 @@ def interactive_menu():
         print("\n🎯 What would you like to do?")
         print("1. 🔴 Record mouse actions")
         print("2. ▶️  Replay recording")
-        print("3. 🖥️  Launch GUI interface") 
+        print("3. 🖥️  Launch GUI interface")
         print("4. 📄 Show recording info")
         print("5. 📁 List recordings")
         print("6. ❓ Show help")
@@ -283,7 +302,9 @@ def interactive_menu():
         choice = input("\nEnter your choice (1-7): ").strip()
         
         if choice == '1':
-            filename = input("Enter output filename (default: data/mouse_recording.json): ").strip()
+            filename_prompt = ("Enter output filename "
+                               "(default: data/mouse_recording.json): ")
+            filename = input(filename_prompt).strip()
             if not filename:
                 filename = "data/mouse_recording.json"
             
@@ -307,7 +328,9 @@ def interactive_menu():
             except ValueError:
                 replay_speed = 1.0
                 
-            delay_input = input("Enter start delay in seconds (default: 3): ").strip()
+            delay_input = input(
+                "Enter start delay in seconds (default: 3): "
+            ).strip()
             try:
                 start_delay = int(delay_input) if delay_input else 3
             except ValueError:
@@ -340,7 +363,9 @@ def interactive_menu():
             input("\nPress Enter to continue...")
             
         elif choice == '5':
-            directory_input = input("Enter directory (default: data): ").strip()
+            directory_input = input(
+                "Enter directory (default: data): "
+            ).strip()
             if not directory_input:
                 directory_input = "data"
                 

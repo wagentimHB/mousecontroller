@@ -11,7 +11,7 @@ from pathlib import Path
 def main():
     """Main function to launch the GUI application"""
     print("Starting Mouse Recorder GUI...")
-    
+
     # Add src to path
     project_root = Path(__file__).parent
     src_path = project_root / "src"
@@ -21,7 +21,7 @@ def main():
     try:
         # Import and run the GUI via main entry point
         from mousecontroller.main import cmd_gui
-         
+
         class GuiArgs:
             pass
 

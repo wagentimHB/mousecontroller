@@ -7,5 +7,13 @@
 # Mouse recorder dependencies
 pynput>=1.7.6
 PyQt6>=6.5.0
+# Development dependencies
+pytest>=6.0.0
+pytest-cov>=2.10.0
+black>=21.0.0
+flake8>=3.8.0
+mypy>=0.812
+pre-commit>=2.10.0
+
 
 # Development dependencies (install with: pip install -r requirements-dev.txt)
